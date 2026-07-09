@@ -1363,12 +1363,25 @@ function generate(){
 }
 
 // Scale report page(s) down to fit the screen width (mobile/tablet/laptop). Export resets this to full size.
+// Uses transform:scale (not CSS zoom — iOS Safari/in-app WebViews don't reflow zoom correctly, which
+// clipped the report). Each page is wrapped in a .pagefit box sized to the SCALED dimensions so the
+// layout reserves exactly the right height (transform alone doesn't collapse the box → content got cut).
 function fitReports(){
   const area=document.getElementById('reportArea');
   if(!area || area.style.display!=='block') return;
   const contentW=area.clientWidth - 14;
   const z=Math.min(1, contentW/1540);
-  area.querySelectorAll('.page').forEach(p=>{ p.style.zoom = z<0.999 ? z : ''; });
+  area.querySelectorAll('.page').forEach(p=>{
+    let w=p.parentElement;
+    if(!w || !w.classList.contains('pagefit')){
+      w=document.createElement('div'); w.className='pagefit';
+      p.parentNode.insertBefore(w,p); w.appendChild(p);
+    }
+    p.style.zoom=''; p.style.transformOrigin='top left';
+    if(z>=0.999){ p.style.transform=''; w.removeAttribute('style'); }
+    else{ p.style.transform='scale('+z+')';
+          w.style.cssText='width:'+Math.round(1540*z)+'px;height:'+Math.round(1040*z)+'px;margin:0 auto 16px;overflow:hidden;'; }
+  });
 }
 let _fitT; window.addEventListener('resize',()=>{ clearTimeout(_fitT); _fitT=setTimeout(fitReports,150); });
 
@@ -1444,10 +1457,13 @@ async function snapshotReport(){
 }
 function exportFileName(){ return 'XRF_'+((G.meta.sampleId||'report').replace(/[^\w\-]+/g,'_')); }
 
-// capture at FULL 1540px regardless of any on-screen fit-to-width zoom (mobile), then restore
-const snap=async page=>{ const z=page.style.zoom; page.style.zoom='';
+// capture at FULL 1540px regardless of any on-screen fit-to-width scaling (mobile), then restore
+const snap=async page=>{
+  const zm=page.style.zoom, tf=page.style.transform;
+  const w=page.parentElement, ws=(w&&w.classList.contains('pagefit'))?w.getAttribute('style'):null;
+  page.style.zoom=''; page.style.transform=''; if(ws!=null) w.removeAttribute('style');
   try{ return await html2canvas(page,{scale:2,useCORS:true,backgroundColor:'#0D1B2A',width:1540,height:1040,windowWidth:1540}); }
-  finally{ page.style.zoom=z; } };
+  finally{ page.style.zoom=zm; page.style.transform=tf; if(ws!=null) w.setAttribute('style',ws); } };
 const pageName=(p,i)=>p.getAttribute('data-name')||('XRF_'+(i+1));
 
 // Export report(s) as PNG — one file per page (handles single + batch)
