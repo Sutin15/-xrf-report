@@ -635,15 +635,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       </div>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
         <span style="font-size:11.5px;color:var(--dim);align-self:center;">ภาพตัวอย่างแร่เลือกจาก:</span>
-        <button type="button" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;" onclick="document.getElementById('inSampleCam').click()">📷 ถ่ายด้วยกล้อง</button>
-        <button type="button" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;" onclick="document.getElementById('inSampleGal').click()">🖼️ แกลเลอรี</button>
+        <label for="inSampleCam" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;cursor:pointer;">📷 ถ่ายด้วยกล้อง</label>
+        <label for="inSampleGal" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;cursor:pointer;">🖼️ แกลเลอรี</label>
         <input type="file" id="inSampleCam" accept="image/*" capture="environment" class="filehide" onchange="onSample(this.files[0])">
         <input type="file" id="inSampleGal" accept="image/*" class="filehide" onchange="onSample(this.files[0])">
       </div>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
         <span style="font-size:11.5px;color:var(--dim);align-self:center;">ผลทดสอบเลือกจาก:</span>
-        <button type="button" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;" onclick="document.getElementById('inResultImg').click()">🖼️ รูป/แกลเลอรี/กล้อง</button>
-        <button type="button" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;" onclick="document.getElementById('inResultPdf').click()">📄 ไฟล์ PDF</button>
+        <label for="inResultImg" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;cursor:pointer;">🖼️ รูป/แกลเลอรี/กล้อง</label>
+        <label for="inResultPdf" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;cursor:pointer;">📄 ไฟล์ PDF</label>
         <input type="file" id="inResultImg" accept="image/*" class="filehide" onchange="onResult(this.files[0])">
         <input type="file" id="inResultPdf" accept="application/pdf,.pdf" class="filehide" onchange="onResult(this.files[0])">
       </div>
