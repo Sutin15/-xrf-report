@@ -642,7 +642,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
   <div class="topbar">
     <div class="logo">⚗️</div>
-    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-5</span></p></div>
+    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-6</span></p></div>
     <div class="sp"></div>
     <button class="btn btn-ghost" id="btnReset" onclick="resetAll()" style="display:none;">🔄 ตัวอย่างใหม่</button>
     <button class="btn btn-ghost" id="btnImg" onclick="exportImage()" style="display:none;color:var(--gold-l);">🖼️ Export รูป (PNG)</button>
@@ -1650,6 +1650,18 @@ function renderReport(){
   const today=new Date().toISOString().slice(0,10);
   // analysis date from the analyzer Test ID (format MM/DD/YY), e.g. "07/08/26 #10" → 2026-07-08
   const analysisDate=(()=>{ const m=(meta.refNo||'').match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/); if(!m) return '—'; let mo=+m[1],d=+m[2],y=+m[3]; if(y<100)y+=2000; return y+'-'+String(mo).padStart(2,'0')+'-'+String(d).padStart(2,'0'); })();
+  // Fluorite commercial-grade reference — only shown when the sample is classified as fluorite.
+  // NOTE: handheld XRF cannot measure F, so it CANNOT assign a CaF₂ grade — this is reference info only.
+  const isFluorite=/Fluorite/i.test(ca.oreType.type);
+  const fluoritePanel=isFluorite?`<div class="panel" style="flex:0 0 auto;border-color:#7a4a8f;">
+      <div class="ptitle" style="color:#d9a7ec;background:linear-gradient(90deg,#2a1836,#1c2f4d);border-bottom-color:#7a4a8f;">🎨 เกรดฟลูออไรต์เชิงพาณิชย์ (CaF₂) — อ้างอิง</div>
+      <div class="pbody">
+        <table class="ptable"><tr><th>เกรด</th><th>CaF₂</th><th>การใช้งานหลัก</th><th>มูลค่า</th></tr>
+          <tr><td><b>Acidspar (เกรดกรด)</b></td><td>≥97%</td><td>ผลิตกรด HF · สารทำความเย็น · อะลูมิเนียม · กัดกระจก</td><td class="n">สูงสุด</td></tr>
+          <tr><td><b>Ceramic (เซรามิก)</b></td><td>~80–96%</td><td>เคลือบเซรามิก · แก้วโอปอล · สีเคลือบ</td><td class="n">ปานกลาง–สูง</td></tr>
+          <tr><td><b>Metspar (ถลุง)</b></td><td>~60–85%</td><td>ฟลักซ์ถลุงเหล็ก/อะลูมิเนียม ลดจุดหลอมเหลว</td><td class="n">พื้นฐาน</td></tr></table>
+        <div style="font-size:10.5px;color:#ff9b8f;margin-top:6px;line-height:1.45;">⚠️ <b>XRF มือถือวัดธาตุ F (ฟลูออรีน) ไม่ได้</b> → <u>ระบุเกรด CaF₂ จากผล XRF ไม่ได้</u> เป็นข้อมูลอ้างอิงเท่านั้น · ยืนยันเกรดด้วยการวิเคราะห์เคมี (ไทเทรต CaF₂) หรือ XRD และยิงซ้ำ "โซนสีม่วง" เพื่อยกระดับ Ca</div>
+      </div></div>`:'';
 
   return `<div class="page" data-name="XRF_${(sid||'report').replace(/[^\w\-]+/g,'_')}">
     <div class="hd">
@@ -1721,6 +1733,7 @@ function renderReport(){
           <div class="ptitle">🧾 4. ผลการวิเคราะห์ XRF (Report)</div>
           <div class="pbody" style="flex:1;"><div class="rep">${repHtml}</div></div>
         </div>
+        ${fluoritePanel}
       </div>
     </div>
     <div class="ft"><span>ผลการวิเคราะห์นี้รับรองเฉพาะตัวอย่างที่ส่งมา · ห้ามเผยแพร่โดยไม่ได้รับอนุญาต<br><span style="color:var(--gold-d);">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span></span>
