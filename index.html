@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>XRF Report Generator (Portable)</title>
 <!-- Portable self-contained build: pdf.js + html2canvas + jsPDF embedded. Works fully offline; just open in any modern browser. -->
 <script>
@@ -586,7 +589,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .ft .mid{font-size:16px;font-weight:800;color:var(--gold-d);letter-spacing:3px;}
   /* report can be panned if it still overflows after auto-fit */
   #reportArea{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-  .page{transform-origin:top center;}
+  .page{transform-origin:top left;}
+  .pagefit{overflow:hidden;}
   /* ===== RESPONSIVE (มือถือ/แทปเลต) ===== */
   @media(max-width:900px){
     .topbar{padding:9px 12px;flex-wrap:wrap;gap:8px 10px;}
@@ -621,7 +625,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
   <div class="topbar">
     <div class="logo">⚗️</div>
-    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.6;font-size:11px;">v2026.07.10-2</span></p></div>
+    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-3</span></p></div>
     <div class="sp"></div>
     <button class="btn btn-ghost" id="btnReset" onclick="resetAll()" style="display:none;">🔄 ตัวอย่างใหม่</button>
     <button class="btn btn-ghost" id="btnImg" onclick="exportImage()" style="display:none;color:var(--gold-l);">🖼️ Export รูป (PNG)</button>
