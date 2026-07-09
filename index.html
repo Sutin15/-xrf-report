@@ -693,7 +693,16 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   <!-- In-app live camera (getUserMedia) — reliable on Android Chrome/iOS Safari over HTTPS, no dependency on the finicky capture= attribute -->
   <div id="camModal" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;">
     <div style="color:#fff;text-align:center;padding:10px;font-size:14px;background:#0d1b2a;" id="camTitle">กล้อง</div>
-    <video id="camVideo" autoplay playsinline muted style="flex:1;width:100%;min-height:0;object-fit:contain;background:#000;"></video>
+    <div id="camStage" style="flex:1;position:relative;min-height:0;display:flex;align-items:center;justify-content:center;background:#000;">
+      <video id="camVideo" autoplay playsinline muted style="width:100%;height:100%;object-fit:contain;background:#000;"></video>
+      <div id="camMsg" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:22px;text-align:center;color:#fff;background:rgba(6,12,22,.92);">
+        <div id="camMsgText" style="font-size:15px;line-height:1.6;max-width:520px;">กำลังเปิดกล้อง…</div>
+        <div id="camMsgBtns" style="display:none;gap:10px;flex-wrap:wrap;justify-content:center;">
+          <button class="btn btn-gold" onclick="openCamera(_camTarget)">🔁 ลองเปิดกล้องอีกครั้ง</button>
+          <button class="btn btn-ghost" onclick="galleryFromCam()" style="color:#fff;border-color:#556;">🖼️ ใช้แกลเลอรีแทน</button>
+        </div>
+      </div>
+    </div>
     <div style="padding:16px 12px;display:flex;gap:12px;justify-content:center;align-items:center;background:#0d1b2a;flex-wrap:wrap;">
       <button class="btn btn-ghost" onclick="closeCamera()" style="color:#fff;border-color:#556;">✕ ยกเลิก</button>
       <button class="btn btn-gold" onclick="capturePhoto()" style="font-size:17px;padding:13px 34px;">📸 ถ่าย</button>
@@ -1033,23 +1042,54 @@ let _camStream=null, _camTarget=null, _camFacing='environment';
 function dataURLtoFile(u,name){ const p=u.split(','); const mime=(p[0].match(/:(.*?);/)||[])[1]||'image/jpeg';
   const bin=atob(p[1]); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
   return new File([arr],name,{type:mime}); }
-async function startStream(){
+function camMsg(html, showBtns){
+  const m=document.getElementById('camMsg'), t=document.getElementById('camMsgText'), b=document.getElementById('camMsgBtns');
+  if(html===null){ m.style.display='none'; return; }
+  t.innerHTML=html; b.style.display=showBtns?'flex':'none'; m.style.display='flex';
+}
+async function getCam(constraints){
+  const s=await navigator.mediaDevices.getUserMedia(constraints);
+  const v=document.getElementById('camVideo');
   if(_camStream){ _camStream.getTracks().forEach(t=>t.stop()); }
-  _camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:_camFacing},audio:false});
-  document.getElementById('camVideo').srcObject=_camStream;
+  _camStream=s; v.srcObject=s;
+  try{ await v.play(); }catch(e){}
+  return s;
+}
+async function startStream(){
+  // Try the requested facing camera; if the device rejects that exact constraint, fall back to ANY camera.
+  try{ return await getCam({video:{facingMode:{ideal:_camFacing}},audio:false}); }
+  catch(e){ if(e && (e.name==='OverconstrainedError'||e.name==='NotFoundError'))
+              return await getCam({video:true,audio:false});
+            throw e; }
 }
 async function openCamera(target){
   _camTarget=target; _camFacing='environment';
   document.getElementById('camTitle').textContent = target==='sample' ? '📷 ถ่ายภาพก้อนแร่' : '📷 ถ่ายจอผลทดสอบ';
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ nativeCamFallback(target); return; }
-  try{ await startStream(); document.getElementById('camModal').style.display='flex'; }
-  catch(e){ console.error(e); nativeCamFallback(target, e); }
+  document.getElementById('camModal').style.display='flex';   // show modal first so the user always sees feedback
+  if(location.protocol!=='https:' && location.hostname!=='localhost' && location.protocol!=='file:'){
+    camMsg('⚠️ เบราว์เซอร์เปิดกล้องได้เฉพาะเว็บ <b>HTTPS</b> เท่านั้น<br>กรุณาเปิดผ่านลิงก์ https://sutin15.github.io/-xrf-report/', true); return;
+  }
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    camMsg('⚠️ เบราว์เซอร์นี้ไม่รองรับกล้องในเว็บ<br>ลองใช้ Chrome/Safari เวอร์ชันใหม่ หรือกดปุ่มแกลเลอรี', true); return;
+  }
+  camMsg('กำลังเปิดกล้อง…<br><span style="font-size:12.5px;color:#9fb3c8">ถ้ามีหน้าต่างขออนุญาต ให้กด “อนุญาต/Allow”</span>', false);
+  try{ await startStream(); camMsg(null); }   // success → hide overlay, live video shows
+  catch(e){ console.error(e); camMsg(camErrText(e), true); }
 }
-function nativeCamFallback(target, e){
-  // getUserMedia unavailable (old browser / permission denied) → try the native capture input
-  const inp = target==='sample' ? document.getElementById('inSampleCam') : document.getElementById('inResultCam');
-  if(inp){ inp.click(); }
-  else alert('เปิดกล้องไม่ได้'+(e?(' ('+e.message+')'):'')+' — ลองใช้ปุ่ม 🖼️ แกลเลอรี แทน');
+function camErrText(e){
+  const n=e&&e.name||'', m=e&&e.message||'';
+  if(n==='NotAllowedError'||n==='SecurityError')
+    return '🚫 กล้องถูก “บล็อก”<br><b>วิธีแก้บน Chrome มือถือ:</b><br>แตะไอคอน 🔒/⚙️ ซ้ายบนช่อง URL → สิทธิ์ → กล้อง → “อนุญาต” แล้วรีเฟรช<br>หรือลองแตะปุ่มด้านล่าง';
+  if(n==='NotFoundError'||n==='OverconstrainedError')
+    return '📵 ไม่พบกล้องบนอุปกรณ์นี้';
+  if(n==='NotReadableError')
+    return '⚠️ กล้องถูกใช้งานโดยแอปอื่นอยู่ กรุณาปิดแอปกล้อง/วิดีโอคอลอื่นก่อน';
+  return '⚠️ เปิดกล้องไม่ได้: '+n+' '+m;
+}
+function galleryFromCam(){
+  const t=_camTarget; closeCamera();
+  const inp = t==='sample' ? document.getElementById('inSampleGal') : document.getElementById('inResultImg');
+  if(inp) inp.click();
 }
 function capturePhoto(){
   const v=document.getElementById('camVideo');
@@ -1066,6 +1106,7 @@ function closeCamera(){
   if(_camStream){ _camStream.getTracks().forEach(t=>t.stop()); _camStream=null; }
   const v=document.getElementById('camVideo'); if(v) v.srcObject=null;
   document.getElementById('camModal').style.display='none';
+  camMsg('กำลังเปิดกล้อง…', false);   // reset overlay for next open
 }
 
 function onSample(file){
