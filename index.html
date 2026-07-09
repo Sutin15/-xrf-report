@@ -556,8 +556,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   /* content sizes the grid; page grows via min-height so panels never clip their text */
   .rbody{flex:1;display:grid;grid-template-columns:400px 1fr 1fr;gap:14px;padding:14px 18px;}
   .rcol{display:flex;flex-direction:column;gap:14px;}
-  .panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
-  .ptitle{background:linear-gradient(90deg,var(--navy),#1c2f4d);color:var(--gold);font-weight:700;font-size:15px;padding:9px 14px;border-bottom:1px solid var(--gold-d);}
+  /* no overflow:hidden on panels — it shaved the last text line / title by a subpixel when flex rounded the height down */
+  .panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;}
+  .ptitle{background:linear-gradient(90deg,var(--navy),#1c2f4d);color:var(--gold);font-weight:700;font-size:15px;padding:9px 14px;border-bottom:1px solid var(--gold-d);border-radius:10px 10px 0 0;}
   .pbody{padding:12px 14px;}
   .photo{width:100%;height:250px;border-radius:8px;border:1px dashed var(--gold-d);background:#0b1626;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;}
   /* keep true aspect ratio (no object-fit — html2canvas ignores it and would stretch the image) */
@@ -643,7 +644,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
   <div class="topbar">
     <div class="logo">⚗️</div>
-    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-7</span></p></div>
+    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-8</span></p></div>
     <div class="sp"></div>
     <button class="btn btn-ghost" id="btnReset" onclick="resetAll()" style="display:none;">🔄 ตัวอย่างใหม่</button>
     <button class="btn btn-ghost" id="btnImg" onclick="exportImage()" style="display:none;color:var(--gold-l);">🖼️ Export รูป (PNG)</button>
