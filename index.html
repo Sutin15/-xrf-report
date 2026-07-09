@@ -610,6 +610,15 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
 </style>
 </head>
 <body>
+  <!-- In-app browser (LINE/FB/IG) warning — these WebViews block the camera; must open in Chrome/Safari -->
+  <div id="inAppBar" style="display:none;position:sticky;top:0;z-index:9000;background:#b45309;color:#fff;padding:11px 14px;font-size:13.5px;line-height:1.5;text-align:center;">
+    <b>⚠️ กำลังเปิดในแอป (LINE/Facebook) — กล้องจะใช้ไม่ได้</b><br>
+    <span id="inAppHow">แตะปุ่มด้านล่างเพื่อเปิดใน Chrome</span>
+    <div style="margin-top:8px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <button class="btn btn-gold" style="padding:8px 16px;" onclick="openInChrome()">🌐 เปิดใน Chrome</button>
+      <button class="btn btn-ghost" style="padding:8px 14px;color:#fff;border-color:#fff8;" onclick="document.getElementById('inAppBar').style.display='none'">✕ ปิด</button>
+    </div>
+  </div>
   <div class="topbar">
     <div class="logo">⚗️</div>
     <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span></p></div>
@@ -1035,6 +1044,38 @@ setupDrop('dzSample',onSample); setupDrop('dzResult',onResult);
   dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over');});
   dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
   dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over'); if(e.dataTransfer.files.length) processBatch(e.dataTransfer.files);});
+})();
+
+// ══════════ IN-APP BROWSER DETECT → OPEN IN CHROME ══════════
+// LINE/Facebook/IG in-app WebViews block getUserMedia. Detect them and push the user to a real browser.
+function isInAppBrowser(){
+  const ua=navigator.userAgent||'';
+  return /\bLine\b|FBAN|FBAV|FB_IAB|Instagram|Messenger|MicroMessenger|TikTok|musical_ly|Twitter|GSA/i.test(ua)
+      || (/(iPhone|iPod|iPad)/i.test(ua) && !/Safari/i.test(ua) && !/CriOS|FxiOS/i.test(ua)); // iOS WebView (no Safari token)
+}
+function isAndroid(){ return /Android/i.test(navigator.userAgent||''); }
+function openInChrome(){
+  const host=location.host, path=location.pathname+location.search, ua=navigator.userAgent||'';
+  if(/\bLine\b/i.test(ua)){
+    // LINE honours this param: reopens the URL in the phone's default external browser
+    const u=location.href + (location.search?'&':'?') + 'openExternalBrowser=1';
+    location.href=u; return;
+  }
+  if(isAndroid()){
+    // Android intent → force Chrome
+    location.href='intent://'+host+path+'#Intent;scheme=https;package=com.android.chrome;end';
+    return;
+  }
+  // iOS: can't force-launch Chrome from a WebView; guide the user
+  document.getElementById('inAppHow').innerHTML='บน iPhone: แตะ ••• หรือ ⤴︎ มุมขวา แล้วเลือก “เปิดใน Safari/Chrome”';
+}
+(function initInApp(){
+  if(!isInAppBrowser()) return;
+  const bar=document.getElementById('inAppBar'); if(bar) bar.style.display='block';
+  if(/\bLine\b/i.test(navigator.userAgent||'') && location.search.indexOf('openExternalBrowser=1')===-1){
+    // Auto: ask LINE to bounce straight to the external browser on first load
+    try{ location.replace(location.href + (location.search?'&':'?') + 'openExternalBrowser=1'); }catch(e){}
+  }
 })();
 
 // ══════════ IN-APP LIVE CAMERA (getUserMedia) ══════════
