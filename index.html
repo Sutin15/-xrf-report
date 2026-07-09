@@ -536,6 +536,23 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .hd .sub{font-size:13px;color:var(--dim);margin-top:3px;display:flex;gap:18px;}
   .hd .rightmeta{margin-left:auto;font-size:12.5px;line-height:1.7;}.hd .rightmeta span{color:var(--gold);}
   .conf{background:var(--red);color:#fff;font-weight:700;font-size:14px;padding:7px 16px;border-radius:5px;letter-spacing:2px;flex-shrink:0;}
+  /* verdict strip — one-glance exploration decision */
+  .verdict{display:flex;align-items:stretch;margin:12px 18px 0;border-radius:11px;overflow:hidden;
+    border:2px solid var(--gold-d);background:linear-gradient(90deg,#12233c,#0f1d31);}
+  .verdict.good{border-color:#2ecc71;box-shadow:0 0 0 1px #2ecc7133 inset;}
+  .verdict.warn{border-color:var(--gold);}
+  .verdict.low{border-color:#5a6b82;}
+  .verdict .seg{flex:1;padding:11px 18px;display:flex;flex-direction:column;justify-content:center;gap:3px;border-left:1px solid #23374f;}
+  .verdict .seg:first-child{border-left:none;}
+  .verdict .seg.lead{flex:1.6;}
+  .verdict .lab{font-size:11px;color:var(--dim);text-transform:uppercase;letter-spacing:.5px;font-weight:700;}
+  .verdict .stars{font-size:22px;letter-spacing:2px;line-height:1;color:var(--gold);}
+  .verdict.good .stars{color:#39d97f;} .verdict.low .stars{color:#8a99ad;}
+  .verdict .head{font-size:19px;font-weight:800;color:#fff;line-height:1.15;}
+  .verdict .big{font-size:22px;font-weight:800;color:var(--gold-l);line-height:1.1;}
+  .verdict .rec{font-size:16px;font-weight:800;color:#fff;line-height:1.2;}
+  .verdict.good .rec{color:#39d97f;}
+  .verdict .recth{font-size:11px;color:var(--dim);font-weight:600;margin-top:1px;}
   .rbody{flex:1;display:grid;grid-template-columns:400px 1fr 1fr;gap:14px;padding:14px 18px;min-height:0;}
   .rcol{display:flex;flex-direction:column;gap:14px;min-height:0;}
   .panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
@@ -625,7 +642,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
   <div class="topbar">
     <div class="logo">⚗️</div>
-    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-4</span></p></div>
+    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-5</span></p></div>
     <div class="sp"></div>
     <button class="btn btn-ghost" id="btnReset" onclick="resetAll()" style="display:none;">🔄 ตัวอย่างใหม่</button>
     <button class="btn btn-ghost" id="btnImg" onclick="exportImage()" style="display:none;color:var(--gold-l);">🖼️ Export รูป (PNG)</button>
@@ -1019,6 +1036,52 @@ function getCommercialAnalysis(xrf) {
     rawValueUsd += (x.concentration/100) * 1000 * p.payable / 1000 * p.usdPerTonne;
   });
   return {oreType, processing, primary, secondary, payableEls, rawValueUsd};
+}
+
+// Exploration-decision scorecard: turns the analysis into a star rating (1–5), a plain-language
+// headline, the primary grade, and a recommended NEXT STEP — for the verdict strip at the top.
+function assessPotential(xrf, ca){
+  const t=ca.oreType.type, prim=ca.primary;
+  // [type matcher, short EN label, base stars, category]
+  const MAP=[
+    [/Copper Sulphide/i,'Copper Sulphide',4,'target'],
+    [/Copper Oxide/i,'Copper Oxide',4,'target'],
+    [/Antimony/i,'Antimony (Stibnite)',4,'target'],
+    [/W Concentrate/i,'Tungsten Concentrate',5,'target'],
+    [/Sn Concentrate/i,'Tin Concentrate',5,'target'],
+    [/Lead.?Zinc/i,'Lead–Zinc',4,'target'],
+    [/Polymetallic/i,'Polymetallic Sulphide',4,'target'],
+    [/Gossan|Iron Oxide/i,'Gossan / Iron Cap',3,'pathfinder'],
+    [/Pyrite/i,'Pyrite — Gold Pathfinder',3,'pathfinder'],
+    [/Manganese/i,'Manganese',3,'industrial'],
+    [/Chromite/i,'Chromite',3,'industrial'],
+    [/Fluorite/i,'Quartz–Fluorite',3,'confirm'],
+    [/Quartz|Silica/i,'Quartz / Silica Vein',2,'host'],
+    [/Saprolite|Weathered/i,'Weathered Rock',2,'host'],
+    [/Silicate/i,'Silicate Host Rock',2,'host'],
+    [/Mixed/i,'Mixed Rock',2,'host'],
+  ];
+  let label='Undetermined', stars=2, cat='host';
+  for(const [re,lab,st,c] of MAP){ if(re.test(t)){ label=lab; stars=st; cat=c; break; } }
+  // For real target ores, modulate by the primary grade vs a "clearly economic" reference grade.
+  if(cat==='target' && prim){
+    const strong={Cu:1,Sb:2,Pb:3,Zn:3,Sn:0.5,W:0.3,Ni:0.5,Mo:0.1,Au:0.0003,Ag:0.02,Ta:0.03}[prim.element];
+    if(strong!=null){ const g=prim.concentration;
+      if(g>=strong*2) stars=5; else if(g>=strong) stars=Math.max(stars,4); else stars=3; }
+  }
+  stars=Math.max(1,Math.min(5,stars));
+  const QUAL=['','Non-Target','Low-Potential','Moderate-Potential','High-Potential','Exceptional'][stars];
+  const RECS={5:['Proceed to Trenching + Drilling','เดินหน้า — ขุดร่อง + วางแผนเจาะสำรวจ'],
+              4:['Proceed to Trenching','เดินหน้า — ขุดร่องสำรวจ (Trenching)'],
+              3:['Detailed Sampling + Assay','เก็บตัวอย่างละเอียด + ส่งแล็บยืนยัน'],
+              2:['Re-sample / Confirm','ยิงซ้ำ / ยืนยันชนิดแร่ก่อนตัดสินใจ'],
+              1:['Record & Move On','บันทึกข้อมูล แล้วเลือกจุดใหม่']};
+  let rec=RECS[stars];
+  if(cat==='pathfinder') rec=['Lab Assay for Au/Ag','ส่ง fire-assay หาทอง/เงิน (XRF วัดไม่ได้)'];
+  if(cat==='confirm')    rec=['Re-shoot + Confirm (UV/XRD)','ยิงซ้ำโซนเป้าหมาย + ยืนยัน (UV/XRD)'];
+  // colour theme by potential
+  const theme = stars>=4?'good':(stars===3?'warn':'low');
+  return {stars,label,headline:QUAL+' '+label,cat,rec,theme,primary:prim};
 }
 
 function toPct(val, unit){ const v = parseFloat(val)||0; return unit==='ppm' ? v/10000 : v; }
@@ -1531,6 +1594,19 @@ function renderReport(){
   const xrf=G.xrf, meta=G.meta;
   const ca=getCommercialAnalysis(xrf);
   const sid=meta.sampleId||'—';
+  // ── verdict strip (top-of-report one-glance decision) ──
+  const vd=assessPotential(xrf,ca);
+  const vdStars='★'.repeat(vd.stars)+'☆'.repeat(5-vd.stars);
+  const vdGradeEl=vd.primary||xrf.find(x=>x.element!=='LE');
+  const vdGradeLab=vd.primary?(vd.primary.element+' Grade'):'องค์ประกอบเด่น';
+  const vdGradeVal=vdGradeEl?fmtConc(vdGradeEl):'—';
+  const vdValue=ca.rawValueUsd>0?(fmtThb(ca.rawValueUsd*MARKET.fx)+'/ตัน'):'—';
+  const verdictHtml=`<div class="verdict ${vd.theme}">
+      <div class="seg lead"><div class="stars">${vdStars}</div><div class="head">${vd.headline}</div></div>
+      <div class="seg"><div class="lab">${vdGradeLab}</div><div class="big">${vdGradeVal}</div></div>
+      <div class="seg"><div class="lab">Indicative Value (in-situ)</div><div class="big">${vdValue}</div></div>
+      <div class="seg"><div class="lab">Recommendation</div><div class="rec">${vd.rec[0]}</div><div class="recth">${vd.rec[1]}</div></div>
+    </div>`;
   // Targets = only economic-grade payable elements (cutoff-based, from getCommercialAnalysis)
   const targets=[...ca.payableEls]
     .sort((a,b)=>(b.concentration*MARKET.prices[b.element].usdPerTonne)-(a.concentration*MARKET.prices[a.element].usdPerTonne));
@@ -1583,6 +1659,7 @@ function renderReport(){
         <div>🏷️ Client: <span>${meta.client||'-'}</span> · Test Code: <span>${meta.testCode||'-'}</span></div></div>
       <div class="conf">CONFIDENTIAL</div>
     </div>
+    ${verdictHtml}
     <div class="rbody">
       <!-- COL1 -->
       <div class="rcol">
