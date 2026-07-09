@@ -553,8 +553,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .verdict .rec{font-size:16px;font-weight:800;color:#fff;line-height:1.2;}
   .verdict.good .rec{color:#39d97f;}
   .verdict .recth{font-size:11px;color:var(--dim);font-weight:600;margin-top:1px;}
-  /* content sizes the grid; page grows via min-height so panels never clip their text */
-  .rbody{flex:1;display:grid;grid-template-columns:400px 1fr 1fr;gap:14px;padding:14px 18px;}
+  /* content sizes the grid; flex:1 0 auto lets rbody GROW past the flex box to fit a tall column
+     (e.g. a big result image) so nothing spills out of the page and gets clipped */
+  .rbody{flex:1 0 auto;display:grid;grid-template-columns:400px 1fr 1fr;gap:14px;padding:14px 18px;}
   .rcol{display:flex;flex-direction:column;gap:14px;}
   /* no overflow:hidden on panels — it shaved the last text line / title by a subpixel when flex rounded the height down */
   .panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;display:flex;flex-direction:column;}
@@ -585,8 +586,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .pie-c b{font-size:20px;color:var(--gold);}.pie-c span{font-size:10px;color:var(--dim);}
   .leg{display:flex;flex-direction:column;gap:8px;font-size:13px;}
   .leg .l{display:flex;align-items:center;gap:8px;}.leg .sw{width:14px;height:14px;border-radius:3px;}.leg .l b{margin-left:auto;color:var(--gold-l);}
-  .rep{background:#fff;color:#1a1a1a;border-radius:8px;padding:10px 12px;height:100%;overflow:hidden;font-size:11px;}
-  .rep img{width:100%;border-radius:4px;}
+  .rep{background:#fff;color:#1a1a1a;border-radius:8px;padding:10px 12px;overflow:hidden;font-size:11px;}
+  /* bound the result image so a tall analyzer-screen photo can't blow up the column past the page */
+  .rep img{max-width:100%;max-height:900px;width:auto;height:auto;display:block;margin:0 auto;border-radius:4px;}
   .rep table{width:100%;border-collapse:collapse;font-family:'Courier New',monospace;font-size:10.5px;}
   .rep td{padding:1px 3px;}.rep .el{font-weight:700;color:#0a4d8c;}.rep .pm{text-align:right;}.rep .er{text-align:right;color:#777;}
   .rep .sec{font-weight:700;color:#0a4d8c;border-bottom:1px solid #0a4d8c;margin:5px 0 3px;}
@@ -644,7 +646,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
   <div class="topbar">
     <div class="logo">⚗️</div>
-    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-8</span></p></div>
+    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-9</span></p></div>
     <div class="sp"></div>
     <button class="btn btn-ghost" id="btnReset" onclick="resetAll()" style="display:none;">🔄 ตัวอย่างใหม่</button>
     <button class="btn btn-ghost" id="btnImg" onclick="exportImage()" style="display:none;color:var(--gold-l);">🖼️ Export รูป (PNG)</button>
