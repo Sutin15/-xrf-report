@@ -8,6 +8,20 @@
 <meta http-equiv="Expires" content="0">
 <title>XRF Report Generator (Portable)</title>
 <!-- Portable self-contained build: pdf.js + html2canvas + jsPDF embedded. Works fully offline; just open in any modern browser. -->
+<!-- PWA: installable app icon on mobile/tablet (hosted HTTPS only; refs 404 harmlessly on file://) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0D1B2A">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="XRF Report">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<script>
+if('serviceWorker' in navigator && location.protocol==='https:'){
+  window.addEventListener('load',function(){ navigator.serviceWorker.register('sw.js').catch(function(){}); });
+}
+</script>
 <script>
 /**
  * @licstart The following is the entire license notice for the
@@ -646,7 +660,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
   <div class="topbar">
     <div class="logo">⚗️</div>
-    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-9</span></p></div>
+    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-10</span></p></div>
     <div class="sp"></div>
     <button class="btn btn-ghost" id="btnReset" onclick="resetAll()" style="display:none;">🔄 ตัวอย่างใหม่</button>
     <button class="btn btn-ghost" id="btnImg" onclick="exportImage()" style="display:none;color:var(--gold-l);">🖼️ Export รูป (PNG)</button>
