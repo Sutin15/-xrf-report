@@ -528,7 +528,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   details.fallback .mini{margin-top:8px;}
   /* ===== REPORT (infographic) ===== */
   #reportArea{display:none;padding:22px 12px;}
-  .page{width:1540px;height:1040px;background:var(--bg);position:relative;overflow:hidden;margin:0 auto;
+  .page{width:1540px;min-height:1040px;background:var(--bg);position:relative;overflow:hidden;margin:0 auto;
     border:1px solid var(--border);box-shadow:0 10px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;}
   .hd{background:linear-gradient(135deg,var(--navy),var(--navy2));border-bottom:3px solid var(--gold);
     padding:14px 26px;display:flex;align-items:center;gap:20px;}
@@ -553,8 +553,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .verdict .rec{font-size:16px;font-weight:800;color:#fff;line-height:1.2;}
   .verdict.good .rec{color:#39d97f;}
   .verdict .recth{font-size:11px;color:var(--dim);font-weight:600;margin-top:1px;}
-  .rbody{flex:1;display:grid;grid-template-columns:400px 1fr 1fr;gap:14px;padding:14px 18px;min-height:0;}
-  .rcol{display:flex;flex-direction:column;gap:14px;min-height:0;}
+  /* content sizes the grid; page grows via min-height so panels never clip their text */
+  .rbody{flex:1;display:grid;grid-template-columns:400px 1fr 1fr;gap:14px;padding:14px 18px;}
+  .rcol{display:flex;flex-direction:column;gap:14px;}
   .panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;}
   .ptitle{background:linear-gradient(90deg,var(--navy),#1c2f4d);color:var(--gold);font-weight:700;font-size:15px;padding:9px 14px;border-bottom:1px solid var(--gold-d);}
   .pbody{padding:12px 14px;}
@@ -642,7 +643,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
   <div class="topbar">
     <div class="logo">⚗️</div>
-    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-6</span></p></div>
+    <div><h1>XRF Report Generator</h1><p>อัปโหลด ภาพแร่ + ผลทดสอบ → วิเคราะห์อัตโนมัติ + ราคาขาย → ออก PDF &nbsp;·&nbsp; <span style="color:var(--gold-l);font-weight:700;">App by Sutin Jaikla (สุทิน ใจกล้า) · RMUTL</span> <span id="appVer" style="opacity:.7;font-size:11px;color:var(--green);font-weight:700;">v2026.07.10-7</span></p></div>
     <div class="sp"></div>
     <button class="btn btn-ghost" id="btnReset" onclick="resetAll()" style="display:none;">🔄 ตัวอย่างใหม่</button>
     <button class="btn btn-ghost" id="btnImg" onclick="exportImage()" style="display:none;color:var(--gold-l);">🖼️ Export รูป (PNG)</button>
@@ -1457,7 +1458,8 @@ function fitReports(){
     p.style.zoom=''; p.style.transformOrigin='top left';
     if(z>=0.999){ p.style.transform=''; w.removeAttribute('style'); }
     else{ p.style.transform='scale('+z+')';
-          w.style.cssText='width:'+Math.round(1540*z)+'px;height:'+Math.round(1040*z)+'px;margin:0 auto 16px;overflow:hidden;'; }
+          const ph=p.offsetHeight||1040;   // page height is now flexible (grows to fit content)
+          w.style.cssText='width:'+Math.round(1540*z)+'px;height:'+Math.round(ph*z)+'px;margin:0 auto 16px;overflow:hidden;'; }
   });
 }
 let _fitT; window.addEventListener('resize',()=>{ clearTimeout(_fitT); _fitT=setTimeout(fitReports,150); });
@@ -1530,17 +1532,22 @@ async function snapshotReport(){
   const page=document.querySelector('#reportArea .page');
   if(!page || !window.html2canvas) return null;
   if(document.fonts&&document.fonts.ready){ try{ await document.fonts.ready; }catch(e){} }
-  return html2canvas(page,{scale:2,useCORS:true,backgroundColor:'#0D1B2A',width:1540,height:1040,windowWidth:1540});
+  return html2canvas(page,{scale:2,useCORS:true,backgroundColor:'#0D1B2A',width:1540,height:Math.max(page.offsetHeight,1040),windowWidth:1540});
 }
 function exportFileName(){ return 'XRF_'+((G.meta.sampleId||'report').replace(/[^\w\-]+/g,'_')); }
 
-// capture at FULL 1540px regardless of any on-screen fit-to-width scaling (mobile), then restore
+// capture at FULL 1540px regardless of any on-screen fit-to-width scaling (mobile), then restore.
+// Page height is flexible now, so capture the page's real (unscaled) height, not a hardcoded 1040.
 const snap=async page=>{
   const zm=page.style.zoom, tf=page.style.transform;
   const w=page.parentElement, ws=(w&&w.classList.contains('pagefit'))?w.getAttribute('style'):null;
   page.style.zoom=''; page.style.transform=''; if(ws!=null) w.removeAttribute('style');
-  try{ return await html2canvas(page,{scale:2,useCORS:true,backgroundColor:'#0D1B2A',width:1540,height:1040,windowWidth:1540}); }
+  const H=Math.max(page.offsetHeight,1040);
+  try{ return await html2canvas(page,{scale:2,useCORS:true,backgroundColor:'#0D1B2A',width:1540,height:H,windowWidth:1540}); }
   finally{ page.style.zoom=zm; page.style.transform=tf; if(ws!=null) w.setAttribute('style',ws); } };
+const pageH=p=>{ const zm=p.style.zoom,tf=p.style.transform,w=p.parentElement,ws=(w&&w.classList.contains('pagefit'))?w.getAttribute('style'):null;
+  p.style.zoom='';p.style.transform='';if(ws!=null)w.removeAttribute('style'); const h=Math.max(p.offsetHeight,1040);
+  p.style.zoom=zm;p.style.transform=tf;if(ws!=null)w.setAttribute('style',ws); return h; };
 const pageName=(p,i)=>p.getAttribute('data-name')||('XRF_'+(i+1));
 
 // Export report(s) as PNG — one file per page (handles single + batch)
@@ -1577,10 +1584,13 @@ async function exportPDF(){
     const {jsPDF}=window.jspdf; let pdf=null;
     for(let i=0;i<pages.length;i++){
       btn.textContent='⏳ PDF '+(i+1)+'/'+pages.length+'...';
-      const img=(await snap(pages[i])).toDataURL('image/jpeg',0.92);
-      if(!pdf) pdf=new jsPDF({orientation:'landscape',unit:'px',format:[1540,1040]});
-      else pdf.addPage([1540,1040],'landscape');
-      pdf.addImage(img,'JPEG',0,0,1540,1040);
+      const canvas=await snap(pages[i]);
+      const w=1540, h=Math.round(w*canvas.height/canvas.width);   // preserve the page's real aspect ratio
+      const orient=h>w?'portrait':'landscape';
+      const img=canvas.toDataURL('image/jpeg',0.92);
+      if(!pdf) pdf=new jsPDF({orientation:orient,unit:'px',format:[w,h]});
+      else pdf.addPage([w,h],orient);
+      pdf.addImage(img,'JPEG',0,0,w,h);
     }
     pdf.save((pages.length>1?('XRF_batch_'+pages.length+'samples'):exportFileName())+'.pdf');
   }catch(e){ console.error(e); alert('สร้าง PDF ไม่สำเร็จ ('+e.message+') — จะใช้หน้าต่าง Print แทน'); window.print(); }
