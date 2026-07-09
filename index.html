@@ -635,15 +635,17 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       </div>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
         <span style="font-size:11.5px;color:var(--dim);align-self:center;">ภาพตัวอย่างแร่เลือกจาก:</span>
-        <label for="inSampleCam" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;cursor:pointer;">📷 ถ่ายด้วยกล้อง</label>
+        <button type="button" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;" onclick="openCamera('sample')">📷 ถ่ายด้วยกล้อง</button>
         <label for="inSampleGal" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;cursor:pointer;">🖼️ แกลเลอรี</label>
         <input type="file" id="inSampleCam" accept="image/*" capture="environment" class="filehide" onchange="onSample(this.files[0])">
         <input type="file" id="inSampleGal" accept="image/*" class="filehide" onchange="onSample(this.files[0])">
       </div>
       <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
         <span style="font-size:11.5px;color:var(--dim);align-self:center;">ผลทดสอบเลือกจาก:</span>
-        <label for="inResultImg" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;cursor:pointer;">🖼️ รูป/แกลเลอรี/กล้อง</label>
+        <button type="button" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;" onclick="openCamera('result')">📷 ถ่ายจอผล</button>
+        <label for="inResultImg" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;cursor:pointer;">🖼️ รูป/แกลเลอรี</label>
         <label for="inResultPdf" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;cursor:pointer;">📄 ไฟล์ PDF</label>
+        <input type="file" id="inResultCam" accept="image/*" capture="environment" class="filehide" onchange="onResult(this.files[0])">
         <input type="file" id="inResultImg" accept="image/*" class="filehide" onchange="onResult(this.files[0])">
         <input type="file" id="inResultPdf" accept="application/pdf,.pdf" class="filehide" onchange="onResult(this.files[0])">
       </div>
@@ -687,6 +689,17 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   </div>
 
   <div id="reportArea"></div>
+
+  <!-- In-app live camera (getUserMedia) — reliable on Android Chrome/iOS Safari over HTTPS, no dependency on the finicky capture= attribute -->
+  <div id="camModal" style="display:none;position:fixed;inset:0;z-index:9999;background:#000;flex-direction:column;">
+    <div style="color:#fff;text-align:center;padding:10px;font-size:14px;background:#0d1b2a;" id="camTitle">กล้อง</div>
+    <video id="camVideo" autoplay playsinline muted style="flex:1;width:100%;min-height:0;object-fit:contain;background:#000;"></video>
+    <div style="padding:16px 12px;display:flex;gap:12px;justify-content:center;align-items:center;background:#0d1b2a;flex-wrap:wrap;">
+      <button class="btn btn-ghost" onclick="closeCamera()" style="color:#fff;border-color:#556;">✕ ยกเลิก</button>
+      <button class="btn btn-gold" onclick="capturePhoto()" style="font-size:17px;padding:13px 34px;">📸 ถ่าย</button>
+      <button class="btn btn-ghost" onclick="flipCamera()" style="color:#fff;border-color:#556;">🔄 สลับกล้อง</button>
+    </div>
+  </div>
 
 <script>
 // Element → likely mineral name (Thai + English)
@@ -1014,6 +1027,46 @@ setupDrop('dzSample',onSample); setupDrop('dzResult',onResult);
   dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
   dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('over'); if(e.dataTransfer.files.length) processBatch(e.dataTransfer.files);});
 })();
+
+// ══════════ IN-APP LIVE CAMERA (getUserMedia) ══════════
+let _camStream=null, _camTarget=null, _camFacing='environment';
+function dataURLtoFile(u,name){ const p=u.split(','); const mime=(p[0].match(/:(.*?);/)||[])[1]||'image/jpeg';
+  const bin=atob(p[1]); const arr=new Uint8Array(bin.length); for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  return new File([arr],name,{type:mime}); }
+async function startStream(){
+  if(_camStream){ _camStream.getTracks().forEach(t=>t.stop()); }
+  _camStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:_camFacing},audio:false});
+  document.getElementById('camVideo').srcObject=_camStream;
+}
+async function openCamera(target){
+  _camTarget=target; _camFacing='environment';
+  document.getElementById('camTitle').textContent = target==='sample' ? '📷 ถ่ายภาพก้อนแร่' : '📷 ถ่ายจอผลทดสอบ';
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ nativeCamFallback(target); return; }
+  try{ await startStream(); document.getElementById('camModal').style.display='flex'; }
+  catch(e){ console.error(e); nativeCamFallback(target, e); }
+}
+function nativeCamFallback(target, e){
+  // getUserMedia unavailable (old browser / permission denied) → try the native capture input
+  const inp = target==='sample' ? document.getElementById('inSampleCam') : document.getElementById('inResultCam');
+  if(inp){ inp.click(); }
+  else alert('เปิดกล้องไม่ได้'+(e?(' ('+e.message+')'):'')+' — ลองใช้ปุ่ม 🖼️ แกลเลอรี แทน');
+}
+function capturePhoto(){
+  const v=document.getElementById('camVideo');
+  if(!v.videoWidth){ alert('กล้องยังไม่พร้อม รอสักครู่แล้วลองใหม่'); return; }
+  const cv=document.createElement('canvas'); cv.width=v.videoWidth; cv.height=v.videoHeight;
+  cv.getContext('2d').drawImage(v,0,0,cv.width,cv.height);
+  const file=dataURLtoFile(cv.toDataURL('image/jpeg',0.9), (_camTarget==='sample'?'sample':'result')+'_photo.jpg');
+  const t=_camTarget; closeCamera();
+  if(t==='sample') onSample(file); else onResult(file);
+}
+async function flipCamera(){ _camFacing = _camFacing==='environment' ? 'user' : 'environment';
+  try{ await startStream(); }catch(e){ /* device may have one camera */ } }
+function closeCamera(){
+  if(_camStream){ _camStream.getTracks().forEach(t=>t.stop()); _camStream=null; }
+  const v=document.getElementById('camVideo'); if(v) v.srcObject=null;
+  document.getElementById('camModal').style.display='none';
+}
 
 function onSample(file){
   if(!file||!file.type.startsWith('image/')){alert('กรุณาเลือกไฟล์รูปภาพ');return;}
