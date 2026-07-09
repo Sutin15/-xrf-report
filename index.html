@@ -506,6 +506,9 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .dz{border:2px dashed var(--gold-d);border-radius:12px;padding:26px 16px;text-align:center;cursor:pointer;
     transition:.15s;background:var(--bg3);position:relative;min-height:210px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;}
   .dz:hover,.dz.over{border-color:var(--gold);background:#233a5c;}
+  /* hide file inputs WITHOUT display:none — mobile (iOS Safari) wont open the picker for display:none inputs clicked via JS */
+  .dz input[type=file]{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;border:0;padding:0;pointer-events:none;}
+  .filehide{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;border:0;padding:0;pointer-events:none;}
   .dz .ic{font-size:40px;}
   .dz .t{font-size:15px;font-weight:700;color:var(--gold-l);}
   .dz .s{font-size:12px;color:var(--dim);}
@@ -581,6 +584,24 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   .proc{font-size:11.5px;}.proc .p{display:flex;gap:7px;margin-bottom:3px;}.proc .p .num{color:var(--gold);font-weight:900;}
   .ft{background:var(--navy2);border-top:2px solid var(--gold-d);padding:9px 26px;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--dim);}
   .ft .mid{font-size:16px;font-weight:800;color:var(--gold-d);letter-spacing:3px;}
+  /* report can be panned if it still overflows after auto-fit */
+  #reportArea{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .page{transform-origin:top center;}
+  /* ===== RESPONSIVE (มือถือ/แทปเลต) ===== */
+  @media(max-width:900px){
+    .topbar{padding:9px 12px;flex-wrap:wrap;gap:8px 10px;}
+    .topbar h1{font-size:15px;} .topbar p{font-size:9.5px;}
+    .topbar .sp{flex-basis:100%;height:0;margin:0;order:2;}
+    .topbar > .btn{order:3;padding:8px 12px;font-size:12.5px;flex:1;justify-content:center;min-width:96px;}
+    .topbar .logo{width:34px;height:34px;font-size:18px;}
+    .wrap{padding:14px 10px;} .card{padding:15px;border-radius:12px;}
+    .drops{grid-template-columns:1fr;gap:12px;}
+    .dz{min-height:150px;padding:18px 12px;}
+    .actions{gap:10px;} .actions > .btn{flex:1;min-width:100%;justify-content:center;}
+    #reportArea{padding:12px 6px;}
+    details.fallback textarea{font-size:14px;}
+    input,select,textarea{font-size:16px !important;} /* กันมือถือ zoom ตอนแตะช่องกรอก */
+  }
   @media print{
     body{background:#fff;} .topbar,#inputCard{display:none !important;}
     #reportArea{display:block !important;padding:0;} .page{box-shadow:none;border:none;margin:0;}
@@ -605,12 +626,26 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       <div class="drops">
         <div class="dz" id="dzSample" onclick="document.getElementById('inSample').click()">
           <div class="ic">📷</div><div class="t">ภาพตัวอย่างแร่</div><div class="s">คลิกหรือลากรูปมาวาง (JPG/PNG)</div>
-          <input type="file" id="inSample" accept="image/*" hidden onchange="onSample(this.files[0])">
+          <input type="file" id="inSample" accept="image/*" onchange="onSample(this.files[0])">
         </div>
         <div class="dz" id="dzResult" onclick="document.getElementById('inResult').click()">
           <div class="ic">📄</div><div class="t">ผลทดสอบ XRF</div><div class="s">คลิกหรือลากไฟล์ PDF / รูปภาพมาวาง</div>
-          <input type="file" id="inResult" accept="application/pdf,image/*" hidden onchange="onResult(this.files[0])">
+          <input type="file" id="inResult" accept="application/pdf,image/*" onchange="onResult(this.files[0])">
         </div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:11.5px;color:var(--dim);align-self:center;">ภาพตัวอย่างแร่เลือกจาก:</span>
+        <button type="button" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;" onclick="document.getElementById('inSampleCam').click()">📷 ถ่ายด้วยกล้อง</button>
+        <button type="button" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;" onclick="document.getElementById('inSampleGal').click()">🖼️ แกลเลอรี</button>
+        <input type="file" id="inSampleCam" accept="image/*" capture="environment" class="filehide" onchange="onSample(this.files[0])">
+        <input type="file" id="inSampleGal" accept="image/*" class="filehide" onchange="onSample(this.files[0])">
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span style="font-size:11.5px;color:var(--dim);align-self:center;">ผลทดสอบเลือกจาก:</span>
+        <button type="button" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;" onclick="document.getElementById('inResultImg').click()">🖼️ รูป/แกลเลอรี/กล้อง</button>
+        <button type="button" class="btn btn-ghost" style="padding:7px 12px;font-size:12.5px;" onclick="document.getElementById('inResultPdf').click()">📄 ไฟล์ PDF</button>
+        <input type="file" id="inResultImg" accept="image/*" class="filehide" onchange="onResult(this.files[0])">
+        <input type="file" id="inResultPdf" accept="application/pdf,.pdf" class="filehide" onchange="onResult(this.files[0])">
       </div>
       <div style="margin-top:16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
         <label style="font-size:13px;color:var(--gold-l);font-weight:700;">ชื่อตัวอย่าง (Sample ID):</label>
@@ -642,7 +677,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         <div class="dz" id="dzBatch" onclick="document.getElementById('inBatch').click()" style="min-height:120px;margin-top:10px;">
           <div class="ic">📚</div><div class="t">เลือก/ลากไฟล์ผล PDF หลายไฟล์ (+ รูปแร่ก็ได้)</div>
           <div class="s">จับคู่รูปกับผลด้วย "ชื่อไฟล์" อัตโนมัติ (เช่น YT7.jpg ↔ YT7.pdf)</div>
-          <input type="file" id="inBatch" accept="application/pdf,image/*" multiple hidden onchange="processBatch(this.files)">
+          <input type="file" id="inBatch" accept="application/pdf,image/*" multiple onchange="processBatch(this.files)">
         </div>
         <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap;">
           <span class="status" id="batchStatus" style="font-size:12px;">ยังไม่ได้เลือกไฟล์</span>
@@ -985,7 +1020,7 @@ function onSample(file){
   const r=new FileReader();
   r.onload=()=>{ G.sampleImg=r.result;
     document.getElementById('dzSample').innerHTML='<div class="ok">✓ ภาพตัวอย่างแร่</div><img src="'+r.result+'">'+
-      '<div class="s">คลิกเพื่อเปลี่ยนรูป</div><input type="file" id="inSample" accept="image/*" hidden onchange="onSample(this.files[0])">';
+      '<div class="s">คลิกเพื่อเปลี่ยนรูป</div><input type="file" id="inSample" accept="image/*" onchange="onSample(this.files[0])">';
   };
   r.readAsDataURL(file);
 }
@@ -1014,7 +1049,7 @@ async function onResult(file){
       G.resultImg=resultImg; G.meta=meta; G.xrf=rows; syncSampleIdInput();
       const parsed={rows,meta};
       dz.innerHTML='<div class="ok">✓ ผลทดสอบ (PDF · อ่าน '+parsed.rows.length+' ธาตุ)</div><img src="'+G.resultImg+'">'+
-        '<div class="s">คลิกเพื่อเปลี่ยนไฟล์</div><input type="file" id="inResult" accept="application/pdf,image/*" hidden onchange="onResult(this.files[0])">';
+        '<div class="s">คลิกเพื่อเปลี่ยนไฟล์</div><input type="file" id="inResult" accept="application/pdf,image/*" onchange="onResult(this.files[0])">';
       if(parsed.rows.length){ st.className='status ok'; st.textContent='อ่านสำเร็จ: '+parsed.rows.length+' ธาตุ'+(parsed.meta.sampleId?(' · '+parsed.meta.sampleId):''); document.getElementById('btnGen').disabled=false; }
       else { st.className='status err'; st.textContent='อ่านค่าไม่ได้ — กรุณาวางข้อความในช่อง "แก้ไขค่า"'; }
     }catch(e){ st.className='status err'; st.textContent='อ่าน PDF ไม่สำเร็จ ('+e.message+') — ลองวางข้อความเอง'; console.error(e); }
@@ -1022,7 +1057,7 @@ async function onResult(file){
     const r=new FileReader();
     r.onload=()=>{ G.resultImg=r.result;
       dz.innerHTML='<div class="ok">✓ ผลทดสอบ (รูปภาพ)</div><img src="'+r.result+'">'+
-        '<div class="s">คลิกเพื่อเปลี่ยนไฟล์</div><input type="file" id="inResult" accept="application/pdf,image/*" hidden onchange="onResult(this.files[0])">';
+        '<div class="s">คลิกเพื่อเปลี่ยนไฟล์</div><input type="file" id="inResult" accept="application/pdf,image/*" onchange="onResult(this.files[0])">';
       st.className='status'; st.innerHTML='ผลเป็น "รูปภาพ" → <button class="btn btn-ghost" style="padding:5px 11px;font-size:12.5px;" onclick="runOCRImage()">🔤 ลองอ่านตัวเลขอัตโนมัติ (OCR · ต้องมีเน็ต)</button> &nbsp;หรือพิมพ์เองในช่อง "แก้ไขค่า" ด้านล่าง';
       const ed=document.getElementById('editDetails'); if(ed) ed.open=true;
     };
@@ -1188,14 +1223,25 @@ function generate(){
   document.getElementById('btnPdf').style.display='inline-flex';
   document.getElementById('btnImg').style.display='inline-flex';
   document.getElementById('btnReset').style.display='inline-flex';
+  fitReports();
   window.scrollTo(0,0);
 }
+
+// Scale report page(s) down to fit the screen width (mobile/tablet/laptop). Export resets this to full size.
+function fitReports(){
+  const area=document.getElementById('reportArea');
+  if(!area || area.style.display!=='block') return;
+  const contentW=area.clientWidth - 14;
+  const z=Math.min(1, contentW/1540);
+  area.querySelectorAll('.page').forEach(p=>{ p.style.zoom = z<0.999 ? z : ''; });
+}
+let _fitT; window.addEventListener('resize',()=>{ clearTimeout(_fitT); _fitT=setTimeout(fitReports,150); });
 
 // In-place reset (more reliable than location.reload, keeps CDN libs loaded)
 function resetAll(){
   G.sampleImg=null; G.resultImg=null; G.meta={}; G.xrf=[];
-  document.getElementById('dzSample').innerHTML='<div class="ic">📷</div><div class="t">ภาพตัวอย่างแร่</div><div class="s">คลิกหรือลากรูปมาวาง (JPG/PNG)</div><input type="file" id="inSample" accept="image/*" hidden onchange="onSample(this.files[0])">';
-  document.getElementById('dzResult').innerHTML='<div class="ic">📄</div><div class="t">ผลทดสอบ XRF</div><div class="s">คลิกหรือลากไฟล์ PDF / รูปภาพมาวาง</div><input type="file" id="inResult" accept="application/pdf,image/*" hidden onchange="onResult(this.files[0])">';
+  document.getElementById('dzSample').innerHTML='<div class="ic">📷</div><div class="t">ภาพตัวอย่างแร่</div><div class="s">คลิกหรือลากรูปมาวาง (JPG/PNG)</div><input type="file" id="inSample" accept="image/*" onchange="onSample(this.files[0])">';
+  document.getElementById('dzResult').innerHTML='<div class="ic">📄</div><div class="t">ผลทดสอบ XRF</div><div class="s">คลิกหรือลากไฟล์ PDF / รูปภาพมาวาง</div><input type="file" id="inResult" accept="application/pdf,image/*" onchange="onResult(this.files[0])">';
   const sid=document.getElementById('inSampleId'); sid.value=''; sid.style.borderColor='';
   const pb=document.getElementById('pasteBox'); if(pb) pb.value='';
   const ps=document.getElementById('pasteStatus'); if(ps){ ps.textContent=''; ps.className='status mini'; }
@@ -1250,6 +1296,7 @@ function renderBatch(){
   document.getElementById('inputCard').style.display='none';
   document.getElementById('reportArea').style.display='block';
   ['btnPdf','btnImg','btnReset'].forEach(id=>document.getElementById(id).style.display='inline-flex');
+  fitReports();
   window.scrollTo(0,0);
 }
 
@@ -1262,7 +1309,10 @@ async function snapshotReport(){
 }
 function exportFileName(){ return 'XRF_'+((G.meta.sampleId||'report').replace(/[^\w\-]+/g,'_')); }
 
-const snap=page=>html2canvas(page,{scale:2,useCORS:true,backgroundColor:'#0D1B2A',width:1540,height:1040,windowWidth:1540});
+// capture at FULL 1540px regardless of any on-screen fit-to-width zoom (mobile), then restore
+const snap=async page=>{ const z=page.style.zoom; page.style.zoom='';
+  try{ return await html2canvas(page,{scale:2,useCORS:true,backgroundColor:'#0D1B2A',width:1540,height:1040,windowWidth:1540}); }
+  finally{ page.style.zoom=z; } };
 const pageName=(p,i)=>p.getAttribute('data-name')||('XRF_'+(i+1));
 
 // Export report(s) as PNG — one file per page (handles single + batch)
